@@ -1,5 +1,3 @@
-var logMessages = []; // Declaração global da variável logMessages
-
 function isNetworkAccessAllowed() {
   var securitySetting = app.preferences.getPrefAsLong(
     "Main Pref Section",
@@ -122,40 +120,27 @@ function buildUI(thisObject) {
 
       myPalette.grp.mainGroup.executeGroup.offsetLayersBtn.onClick = function () {
           try {
-              alert("Iniciando execução do script.");
-              logMessages = []; // Limpa as mensagens de log anteriores
-              logMessages.push("Iniciando execução do script.");
               app.beginUndoGroup("Aplicar Animação");
               var comp = app.project.activeItem;
               if (!comp || !(comp instanceof CompItem)) {
                   throw new Error("Nenhuma composição selecionada.");
               }
-              logMessages.push("Composição ativa: " + comp.name);
 
               var selectedLayerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.selection;
               if (!selectedLayerItem) {
                   throw new Error("Nenhuma camada selecionada no dropdown.");
               }
               var selectedLayer = comp.layer(selectedLayerItem.layerIndex);
-              logMessages.push("Camada selecionada: " + selectedLayer.name);
               
               var selectedAnimation = myPalette.grp.mainGroup.animationGroup.animationDropDown.selection.text;
               var repeatCount = parseInt(myPalette.grp.mainGroup.repeatGroup.repeatAmount.text);
               var animationSize = myPalette.grp.mainGroup.sizeGroup.sizeSlider.value / 100;
-              
-              logMessages.push("Animação selecionada: " + selectedAnimation);
-              logMessages.push("Número de repetições: " + repeatCount);
-              logMessages.push("Tamanho da animação: " + (animationSize * 100) + "%");
               
               applyAnimation(selectedLayer, selectedAnimation, repeatCount, animationSize);
               
               app.endUndoGroup();
           } catch (error) {
               alert("Erro durante a execução do script: " + error.toString());
-              logMessages.push("Erro: " + error.toString());
-          } finally {
-              // Exibir log em uma janela de alerta
-              alert("Log de execução:\n" + logMessages.join("\n"));
           }
       };
   }
@@ -196,16 +181,14 @@ function resolverCaminhoRede(caminho) {
 function applyAnimation(layer, animation, repeatCount, animationSize) {
     try {
         if (!layer) {
-            throw new Error("Camada selecionada é nula ou indefinida.");
+            return;
         }
 
         var comp = layer.containingComp;
         if (!comp) {
-            throw new Error("Não foi possível obter a composição contendo a camada.");
+            return;
         }
 
-        logMessages.push("Iniciando aplicação da animação '" + animation + "' na camada: " + layer.name);
-        
         var animationPath;
         if (animation === "Flash PW (novo)") {
             animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FX_PW_F.mov";
@@ -232,25 +215,21 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
         }
 
         if (!animationPath) {
-            throw new Error("Caminho da animação não definido para: " + animation);
+            return;
         }
 
         var animationFile = resolverCaminhoRede(animationPath);
-        logMessages.push("Tentando acessar o arquivo de animação: " + animationFile.fsName);
 
         if (!animationFile.exists) {
-            throw new Error("Arquivo de animação não encontrado: " + animationFile.fsName);
+            return;
         }
 
-        logMessages.push("Arquivo de animação encontrado.");
         var animationFootage = app.project.importFile(new ImportOptions(animationFile));
         if (!animationFootage) {
-            throw new Error("Falha ao importar o arquivo de animação.");
+            return;
         }
-        logMessages.push("Arquivo de animação importado com sucesso.");
-        
+
         var isShapeLayer = layer instanceof ShapeLayer;
-        logMessages.push("Tipo de camada: " + (isShapeLayer ? "Shape Layer" : "Outra"));
 
         var layerPosition = layer.transform.position.value;
         var layerAnchorPoint = layer.transform.anchorPoint.value;
@@ -265,65 +244,64 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
             ];
         }
 
+        var shapePaths = [];
         var layerBounds;
         var getRandomPoint;
 
         if (isShapeLayer) {
             var contents = layer.property("Contents");
             if (!contents) {
-                throw new Error("Não foi possível acessar o conteúdo da Shape Layer.");
+                return;
             }
             
-            logMessages.push("Número de propriedades no conteúdo: " + contents.numProperties);
-
-            function findShapePath(prop) {
+            function findShapePaths(prop) {
                 for (var i = 1; i <= prop.numProperties; i++) {
                     var p = prop.property(i);
-                    logMessages.push("Analisando propriedade: " + p.name + " (Match Name: " + p.matchName + ")");
                     
                     if (p.matchName === "ADBE Vector Shape - Group") {
-                        return p.property("Path");
+                        shapePaths.push(p.property("Path").value);
                     } else if (p.propertyType === PropertyType.INDEXED_GROUP || p.propertyType === PropertyType.NAMED_GROUP) {
-                        var result = findShapePath(p);
-                        if (result) return result;
+                        findShapePaths(p);
                     }
                 }
-                return null;
             }
 
-            var shapePath = findShapePath(contents);
+            findShapePaths(contents);
             
-            if (!shapePath) {
-                throw new Error("Não foi possível encontrar o path na Shape Layer.");
+            if (shapePaths.length === 0) {
+                return;
             }
             
-            logMessages.push("Path encontrado: " + shapePath.name);
-            
-            var path = shapePath.value;
-            var vertices = path.vertices;
             var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             
-            for (var i = 0; i < vertices.length; i++) {
-                var vertex = vertices[i];
-                minX = Math.min(minX, vertex[0]);
-                minY = Math.min(minY, vertex[1]);
-                maxX = Math.max(maxX, vertex[0]);
-                maxY = Math.max(maxY, vertex[1]);
+            for (var i = 0; i < shapePaths.length; i++) {
+                var vertices = shapePaths[i].vertices;
+                for (var j = 0; j < vertices.length; j++) {
+                    var vertex = vertices[j];
+                    minX = Math.min(minX, vertex[0]);
+                    minY = Math.min(minY, vertex[1]);
+                    maxX = Math.max(maxX, vertex[0]);
+                    maxY = Math.max(maxY, vertex[1]);
+                }
             }
             
             layerBounds = {left: minX, top: minY, right: maxX, bottom: maxY};
 
-            function isPointInShape(x, y) {
-                var result = false;
-                var j = path.vertices.length - 1;
-                for (var i = 0; i < path.vertices.length; i++) {
-                    if ((path.vertices[i][1] > y) != (path.vertices[j][1] > y) &&
-                        (x < (path.vertices[j][0] - path.vertices[i][0]) * (y - path.vertices[i][1]) / (path.vertices[j][1] - path.vertices[i][1]) + path.vertices[i][0])) {
-                        result = !result;
+            function isPointInShapes(x, y) {
+                for (var k = 0; k < shapePaths.length; k++) {
+                    var path = shapePaths[k];
+                    var result = false;
+                    var j = path.vertices.length - 1;
+                    for (var i = 0; i < path.vertices.length; i++) {
+                        if ((path.vertices[i][1] > y) != (path.vertices[j][1] > y) &&
+                            (x < (path.vertices[j][0] - path.vertices[i][0]) * (y - path.vertices[i][1]) / (path.vertices[j][1] - path.vertices[i][1]) + path.vertices[i][0])) {
+                            result = !result;
+                        }
+                        j = i;
                     }
-                    j = i;
+                    if (result) return true;
                 }
-                return result;
+                return false;
             }
 
             getRandomPoint = function() {
@@ -331,7 +309,7 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
                 do {
                     x = layerBounds.left + Math.random() * (layerBounds.right - layerBounds.left);
                     y = layerBounds.top + Math.random() * (layerBounds.bottom - layerBounds.top);
-                } while (!isPointInShape(x, y));
+                } while (!isPointInShapes(x, y));
                 return localToGlobal([x, y]);
             };
         } else {
@@ -354,15 +332,13 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
             };
         }
 
-        logMessages.push("Limites da camada: " + JSON.stringify(layerBounds));
-        
         var maxOffset = 120;
         var createdLayers = [];
         
         for (var i = 0; i < repeatCount; i++) {
             var animationLayer = comp.layers.add(animationFootage);
             if (!animationLayer) {
-                throw new Error("Falha ao adicionar camada de animação à composição.");
+                return;
             }
             createdLayers.push(animationLayer);
             
@@ -387,8 +363,6 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
             
             var animationDuration = animationLayer.outPoint - animationLayer.inPoint;
             animationLayer.outPoint = Math.min(layer.outPoint, animationLayer.inPoint + animationDuration);
-            
-            logMessages.push("Animação " + (i + 1) + " de " + repeatCount + " aplicada em posição aleatória com offset de " + (randomOffset / comp.frameRate).toFixed(2) + " segundos.");
         }
         
         if (createdLayers.length > 0) {
@@ -407,15 +381,10 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
             }
             var precomp = comp.layers.precompose(layerIndices, precompName, true);
             if (!precomp) {
-                throw new Error("Falha ao criar precompose.");
+                return;
             }
-            logMessages.push("Precompose criado: " + precompName + " com " + createdLayers.length + " camadas.");
         }
-        
-        logMessages.push("Animação '" + animation + "' aplicada com sucesso " + repeatCount + " vezes à camada: " + layer.name);
     } catch (error) {
-        logMessages.push("Erro ao aplicar a animação: " + error.toString());
-        throw error;
     }
 }
 
