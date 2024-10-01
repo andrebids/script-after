@@ -206,31 +206,37 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
       logMessages.push("Arquivo de animação importado com sucesso.");
       
       // Obter as dimensões e posição da camada selecionada
-      var layerRect = layer.sourceRectAtTime(layer.inPoint, false);
+      var layerWidth = layer.width;
+      var layerHeight = layer.height;
       var layerPosition = layer.transform.position.value;
+      var layerAnchor = layer.transform.anchorPoint.value;
+      var layerScale = layer.transform.scale.value;
       
       for (var i = 0; i < repeatCount; i++) {
           // Adicionar a camada de animação
           var animationLayer = comp.layers.add(animationFootage);
           animationLayer.moveToBeginning(); // Move a camada para o topo da timeline
           
-          // Obter as dimensões reais da animação
-          var footageWidth = animationFootage.width;
-          var footageHeight = animationFootage.height;
+          // Ajustar a escala da animação
+          var scale = animationSize * 100;
+          animationLayer.transform.scale.setValue([scale, scale]);
           
-          // Calcular uma posição aleatória dentro da área ocupada pela camada selecionada
-          var maxX = layerRect.width - footageWidth;
-          var maxY = layerRect.height - footageHeight;
-          var randomX = Math.random() * maxX;
-          var randomY = Math.random() * maxY;
+          // Calcular as dimensões da animação após o ajuste de escala
+          var footageWidth = animationFootage.width * animationSize;
+          var footageHeight = animationFootage.height * animationSize;
           
-          // Definir a posição da animação em relação à composição
-          var animationPosition = [
-              layerPosition[0] + randomX - layerRect.width/2 + footageWidth/2,
-              layerPosition[1] + randomY - layerRect.height/2 + footageHeight/2
-          ];
+          // Calcular os limites da camada selecionada na composição
+          var layerLeft = layerPosition[0] - (layerWidth * layerScale[0] / 100) / 2;
+          var layerTop = layerPosition[1] - (layerHeight * layerScale[1] / 100) / 2;
+          var layerRight = layerLeft + (layerWidth * layerScale[0] / 100);
+          var layerBottom = layerTop + (layerHeight * layerScale[1] / 100);
           
-          animationLayer.transform.position.setValue(animationPosition);
+          // Calcular uma posição aleatória dentro dos limites da camada selecionada
+          var randomX = layerLeft + Math.random() * (layerRight - layerLeft - footageWidth);
+          var randomY = layerTop + Math.random() * (layerBottom - layerTop - footageHeight);
+          
+          // Definir a posição da animação
+          animationLayer.transform.position.setValue([randomX + footageWidth/2, randomY + footageHeight/2]);
           
           // Ajustar o tempo da animação para começar no início da camada selecionada
           animationLayer.startTime = layer.inPoint;
