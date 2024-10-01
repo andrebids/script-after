@@ -49,7 +49,7 @@ function buildUI(thisObject) {
                   sizeGroup: Group { \
                       orientation:'row', alignment:['fill','top'], spacing:5, \
                       sizeText: StaticText { text:'Tamanho (%):', alignment:['left','center'] }, \
-                      sizeSlider: Slider { minvalue:10, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
+                      sizeSlider: Slider { minvalue:5, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
                       sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
                   }, \
                   executeGroup: Group { \
@@ -96,11 +96,17 @@ function buildUI(thisObject) {
       updateLayerDropdown();
 
       // Atualizar o valor do tamanho quando o slider é movido
-      myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
-          var value = Math.round(this.value / 10) * 10;
-          this.value = value;
-          myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
-      }
+          myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
+            var value = Math.max(5, Math.round(this.value / 5) * 5);
+            this.value = value;
+            myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
+        }
+        
+        myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChange = function() {
+            var value = Math.max(5, Math.round(this.value / 5) * 5);
+            this.value = value;
+            myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
+        }
 
       myPalette.grp.mainGroup.executeGroup.offsetLayersBtn.onClick = function () {
           try {
@@ -205,7 +211,7 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
       var layerAnchor = layer.transform.anchorPoint.value;
       var layerScale = layer.transform.scale.value;
       
-      // Definir o valor fixo para o offset máximo
+      // Definir o valor fixo para o offset máximo (em frames)
       var maxOffset = 120;
       
       for (var i = 0; i < repeatCount; i++) {
@@ -234,18 +240,25 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
           // Definir a posição da animação
           animationLayer.transform.position.setValue([randomX + footageWidth/2, randomY + footageHeight/2]);
           
-          // Calcular o offset aleatório (em segundos)
-          var randomOffset = Math.random() * maxOffset / comp.frameRate;
+          // Calcular o offset aleatório (em frames)
+          var randomOffset = Math.floor(Math.random() * maxOffset);
           
-          // Ajustar o tempo da animação com o offset aleatório
-          animationLayer.startTime = layer.inPoint + randomOffset;
-          animationLayer.inPoint = layer.inPoint + randomOffset;
+          // Ajustar o tempo da animação com o offset calculado
+          animationLayer.startTime = layer.inPoint;
+          animationLayer.inPoint = layer.inPoint;
+          
+          // Aplicar o offset usando time remapping
+          if (animationLayer.canSetTimeRemapEnabled) {
+              animationLayer.timeRemapEnabled = true;
+              var timeRemap = animationLayer.property("ADBE Time Remapping");
+              timeRemap.setValueAtTime(0, randomOffset / comp.frameRate);
+          }
           
           // Ajustar o ponto de saída para não ultrapassar o da camada selecionada
           var animationDuration = animationLayer.outPoint - animationLayer.inPoint;
           animationLayer.outPoint = Math.min(layer.outPoint, animationLayer.inPoint + animationDuration);
           
-          logMessages.push("Animação " + (i + 1) + " de " + repeatCount + " aplicada em posição aleatória com offset de " + randomOffset.toFixed(2) + " segundos.");
+          logMessages.push("Animação " + (i + 1) + " de " + repeatCount + " aplicada em posição aleatória com offset de " + (randomOffset / comp.frameRate).toFixed(2) + " segundos.");
       }
       
       logMessages.push("Animação '" + animation + "' aplicada com sucesso " + repeatCount + " vezes à camada: " + layer.name);
