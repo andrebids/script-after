@@ -29,13 +29,13 @@ function buildUI(thisObject) {
       var res =
           "group { \
               orientation:'column', alignment:['fill','top'], \
-              mainGroup: Group { \
-                  text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
-                  animationGroup: Group { \
-                      orientation:'row', alignment:['fill','top'], spacing:5, \
-                      animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
-                      animationDropDown: DropDownList { properties:{items:['Flash', 'SlowFlash']}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
-                  }, \
+                mainGroup: Group { \
+                    text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
+                    animationGroup: Group { \
+                        orientation:'row', alignment:['fill','top'], spacing:5, \
+                        animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
+                        animationDropDown: DropDownList { properties:{items:['Flash', 'FlashWW', 'SlowFlash']}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
+                    }, \
                   layerGroup: Group { \
                       orientation:'row', alignment:['fill','top'], spacing:5, \
                       layerText: StaticText { text:'Camada:', alignment:['left','center'] }, \
@@ -189,6 +189,8 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
         var animationPath;
         if (animation === "Flash") {
             animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\Starflash20.mov";
+        } else if (animation === "FlashWW") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\StarflashWW.mov";
         } else if (animation === "SlowFlash") {
             animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\SlowFlash.mov";
         }
