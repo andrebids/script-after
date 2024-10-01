@@ -52,12 +52,6 @@ function buildUI(thisObject) {
                       sizeSlider: Slider { minvalue:10, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
                       sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
                   }, \
-                  offsetGroup: Group { \
-                      orientation:'row', alignment:['fill','top'], spacing:5, \
-                      instructionText: StaticText { text:'Offset Máximo:', alignment:['left','center'] }, \
-                      offsetAmount: EditText { text:'120', alignment:['fill','center'], helpTip:'Valor máximo do offset aleatório' }, \
-                      offsetFormat: DropDownList { properties:{items:['Frames', 'Seconds']}, alignment:['right','top'], preferredSize:[80,25], helpTip:'Unidades do offset' } \
-                  }, \
                   executeGroup: Group { \
                       orientation:'row', alignChildren:['fill','top'], \
                       offsetLayersBtn: Button { text:'Aplicar Animação', helpTip:'Aplica a animação à camada selecionada com offset aleatório' } \
@@ -67,7 +61,6 @@ function buildUI(thisObject) {
       myPalette.grp = myPalette.add(res);
 
       myPalette.grp.mainGroup.animationGroup.animationDropDown.selection = 0;
-      myPalette.grp.mainGroup.offsetGroup.offsetFormat.selection = 0;
 
       // Função para atualizar o dropdown de camadas
       function updateLayerDropdown() {
@@ -212,9 +205,8 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
       var layerAnchor = layer.transform.anchorPoint.value;
       var layerScale = layer.transform.scale.value;
       
-      // Obter o valor máximo de offset e o formato
-      var maxOffset = parseFloat(myPalette.grp.mainGroup.offsetGroup.offsetAmount.text);
-      var offsetFormat = myPalette.grp.mainGroup.offsetGroup.offsetFormat.selection.text;
+      // Definir o valor fixo para o offset máximo
+      var maxOffset = 120;
       
       for (var i = 0; i < repeatCount; i++) {
           // Adicionar a camada de animação
@@ -242,13 +234,8 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
           // Definir a posição da animação
           animationLayer.transform.position.setValue([randomX + footageWidth/2, randomY + footageHeight/2]);
           
-          // Calcular o offset aleatório
-          var randomOffset;
-          if (offsetFormat === "Frames") {
-              randomOffset = Math.random() * maxOffset / comp.frameRate;
-          } else { // Seconds
-              randomOffset = Math.random() * maxOffset;
-          }
+          // Calcular o offset aleatório (em segundos)
+          var randomOffset = Math.random() * maxOffset / comp.frameRate;
           
           // Ajustar o tempo da animação com o offset aleatório
           animationLayer.startTime = layer.inPoint + randomOffset;
