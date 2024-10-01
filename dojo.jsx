@@ -212,6 +212,10 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
       var layerAnchor = layer.transform.anchorPoint.value;
       var layerScale = layer.transform.scale.value;
       
+      // Obter o valor máximo de offset e o formato
+      var maxOffset = parseFloat(myPalette.grp.mainGroup.offsetGroup.offsetAmount.text);
+      var offsetFormat = myPalette.grp.mainGroup.offsetGroup.offsetFormat.selection.text;
+      
       for (var i = 0; i < repeatCount; i++) {
           // Adicionar a camada de animação
           var animationLayer = comp.layers.add(animationFootage);
@@ -238,15 +242,23 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
           // Definir a posição da animação
           animationLayer.transform.position.setValue([randomX + footageWidth/2, randomY + footageHeight/2]);
           
-          // Ajustar o tempo da animação para começar no início da camada selecionada
-          animationLayer.startTime = layer.inPoint;
-          animationLayer.inPoint = layer.inPoint;
+          // Calcular o offset aleatório
+          var randomOffset;
+          if (offsetFormat === "Frames") {
+              randomOffset = Math.random() * maxOffset / comp.frameRate;
+          } else { // Seconds
+              randomOffset = Math.random() * maxOffset;
+          }
+          
+          // Ajustar o tempo da animação com o offset aleatório
+          animationLayer.startTime = layer.inPoint + randomOffset;
+          animationLayer.inPoint = layer.inPoint + randomOffset;
           
           // Ajustar o ponto de saída para não ultrapassar o da camada selecionada
           var animationDuration = animationLayer.outPoint - animationLayer.inPoint;
-          animationLayer.outPoint = Math.min(layer.outPoint, layer.inPoint + animationDuration);
+          animationLayer.outPoint = Math.min(layer.outPoint, animationLayer.inPoint + animationDuration);
           
-          logMessages.push("Animação " + (i + 1) + " de " + repeatCount + " aplicada em posição aleatória.");
+          logMessages.push("Animação " + (i + 1) + " de " + repeatCount + " aplicada em posição aleatória com offset de " + randomOffset.toFixed(2) + " segundos.");
       }
       
       logMessages.push("Animação '" + animation + "' aplicada com sucesso " + repeatCount + " vezes à camada: " + layer.name);
@@ -256,8 +268,8 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
   }
 }
 
-var scriptTitle = "Dojo Shifter";
-var scriptVersion = "v1.2";
+var scriptTitle = "Bids Shifter";
+var scriptVersion = "v1.0";
 
 try {
   isNetworkAccessAllowed();
