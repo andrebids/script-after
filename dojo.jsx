@@ -217,7 +217,7 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
           var animationLayer = comp.layers.add(animationFootage);
           animationLayer.moveToBeginning(); // Move a camada para o topo da timeline
           
-          // Ajustar a escala da animação
+          // Ajustar a escala da animação baseado no animationSize
           var scale = animationSize * 100;
           animationLayer.transform.scale.setValue([scale, scale]);
           
