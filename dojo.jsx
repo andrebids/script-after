@@ -19,115 +19,140 @@ function isNetworkAccessAllowed() {
 
 function buildUI(thisObject) {
   if (thisObject instanceof Panel) {
-    var myPalette = thisObject;
+      var myPalette = thisObject;
   } else {
-    var myPalette = new Window("palette", scriptTitle, undefined, {
-      resizeable: true,
-    });
+      var myPalette = new Window("palette", scriptTitle, undefined, {
+          resizeable: true,
+      });
   }
   if (myPalette != null) {
-    var res =
-      "group { \
-        orientation:'column', alignment:['fill','top'], \
-        mainGroup: Group { \
-          text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
-          animationGroup: Group { \
-            orientation:'row', alignment:['fill','top'], spacing:5, \
-            animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
-            animationDropDown: DropDownList { properties:{items:['Flash', 'SlowFlash']}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
-          }, \
-          layerGroup: Group { \
-            orientation:'row', alignment:['fill','top'], spacing:5, \
-            layerText: StaticText { text:'Camada:', alignment:['left','center'] }, \
-            layerDropDown: DropDownList { alignment:['fill','center'], helpTip:'Escolha a camada para aplicar a animação' } \
-          }, \
-          repeatGroup: Group { \
-            orientation:'row', alignment:['fill','top'], spacing:5, \
-            repeatText: StaticText { text:'Repetições:', alignment:['left','center'] }, \
-            repeatAmount: EditText { text:'1', alignment:['fill','center'], helpTip:'Número de vezes para repetir a animação' } \
-          }, \
-          sizeGroup: Group { \
-            orientation:'row', alignment:['fill','top'], spacing:5, \
-            sizeText: StaticText { text:'Tamanho (%):', alignment:['left','center'] }, \
-            sizeSlider: Slider { minvalue:10, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
-            sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
-          }, \
-          offsetGroup: Group { \
-            orientation:'row', alignment:['fill','top'], spacing:5, \
-            instructionText: StaticText { text:'Offset Máximo:', alignment:['left','center'] }, \
-            offsetAmount: EditText { text:'120', alignment:['fill','center'], helpTip:'Valor máximo do offset aleatório' }, \
-            offsetFormat: DropDownList { properties:{items:['Frames', 'Seconds']}, alignment:['right','top'], preferredSize:[80,25], helpTip:'Unidades do offset' } \
-          }, \
-          executeGroup: Group { \
-            orientation:'row', alignChildren:['fill','top'], \
-            offsetLayersBtn: Button { text:'Aplicar Animação', helpTip:'Aplica a animação à camada selecionada com offset aleatório' } \
-          } \
-        } \
-      }";
-    myPalette.grp = myPalette.add(res);
+      var res =
+          "group { \
+              orientation:'column', alignment:['fill','top'], \
+              mainGroup: Group { \
+                  text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
+                  animationGroup: Group { \
+                      orientation:'row', alignment:['fill','top'], spacing:5, \
+                      animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
+                      animationDropDown: DropDownList { properties:{items:['Flash', 'SlowFlash']}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
+                  }, \
+                  layerGroup: Group { \
+                      orientation:'row', alignment:['fill','top'], spacing:5, \
+                      layerText: StaticText { text:'Camada:', alignment:['left','center'] }, \
+                      layerDropDown: DropDownList { alignment:['fill','center'], helpTip:'Escolha a camada para aplicar a animação' } \
+                  }, \
+                  repeatGroup: Group { \
+                      orientation:'row', alignment:['fill','top'], spacing:5, \
+                      repeatText: StaticText { text:'Repetições:', alignment:['left','center'] }, \
+                      repeatAmount: EditText { text:'1', alignment:['fill','center'], helpTip:'Número de vezes para repetir a animação' } \
+                  }, \
+                  sizeGroup: Group { \
+                      orientation:'row', alignment:['fill','top'], spacing:5, \
+                      sizeText: StaticText { text:'Tamanho (%):', alignment:['left','center'] }, \
+                      sizeSlider: Slider { minvalue:10, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
+                      sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
+                  }, \
+                  offsetGroup: Group { \
+                      orientation:'row', alignment:['fill','top'], spacing:5, \
+                      instructionText: StaticText { text:'Offset Máximo:', alignment:['left','center'] }, \
+                      offsetAmount: EditText { text:'120', alignment:['fill','center'], helpTip:'Valor máximo do offset aleatório' }, \
+                      offsetFormat: DropDownList { properties:{items:['Frames', 'Seconds']}, alignment:['right','top'], preferredSize:[80,25], helpTip:'Unidades do offset' } \
+                  }, \
+                  executeGroup: Group { \
+                      orientation:'row', alignChildren:['fill','top'], \
+                      offsetLayersBtn: Button { text:'Aplicar Animação', helpTip:'Aplica a animação à camada selecionada com offset aleatório' } \
+                  } \
+              } \
+          }";
+      myPalette.grp = myPalette.add(res);
 
-    myPalette.grp.mainGroup.animationGroup.animationDropDown.selection = 0;
-    myPalette.grp.mainGroup.offsetGroup.offsetFormat.selection = 0;
+      myPalette.grp.mainGroup.animationGroup.animationDropDown.selection = 0;
+      myPalette.grp.mainGroup.offsetGroup.offsetFormat.selection = 0;
 
-    // Preencher o dropdown de camadas
-    var comp = app.project.activeItem;
-    if (comp && comp instanceof CompItem) {
-      for (var i = 1; i <= comp.numLayers; i++) {
-        myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", comp.layer(i).name);
+      // Função para atualizar o dropdown de camadas
+      function updateLayerDropdown() {
+          var comp = app.project.activeItem;
+          if (comp && comp instanceof CompItem) {
+              myPalette.grp.mainGroup.layerGroup.layerDropDown.removeAll();
+              for (var i = 1; i <= comp.numLayers; i++) {
+                  var layerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", comp.layer(i).name);
+                  layerItem.layerIndex = i;
+              }
+              if (comp.numLayers > 0) {
+                  myPalette.grp.mainGroup.layerGroup.layerDropDown.selection = 0;
+                  myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = true;
+              } else {
+                  myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", "Nenhuma camada na composição");
+                  myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = false;
+              }
+          } else {
+              myPalette.grp.mainGroup.layerGroup.layerDropDown.removeAll();
+              myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", "Nenhuma composição ativa");
+              myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = false;
+          }
       }
-      if (comp.numLayers > 0) {
-        myPalette.grp.mainGroup.layerGroup.layerDropDown.selection = 0;
+
+      // Atualizar o dropdown de camadas quando o painel é aberto
+      myPalette.onShow = updateLayerDropdown;
+
+      // Adicionar um botão para atualizar manualmente o dropdown de camadas
+      myPalette.grp.mainGroup.layerGroup.add("button", undefined, "Atualizar", {alignment: ['right', 'center']});
+      myPalette.grp.mainGroup.layerGroup.children[2].onClick = updateLayerDropdown;
+
+      // Inicializar o dropdown de camadas
+      updateLayerDropdown();
+
+      // Atualizar o valor do tamanho quando o slider é movido
+      myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
+          var value = Math.round(this.value / 10) * 10;
+          this.value = value;
+          myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
       }
-    }
 
-    // Atualizar o valor do tamanho quando o slider é movido
-    myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
-      var value = Math.round(this.value / 10) * 10;
-      this.value = value;
-      myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
-    }
+      myPalette.grp.mainGroup.executeGroup.offsetLayersBtn.onClick = function () {
+          try {
+              alert("Iniciando execução do script.");
+              logMessages = []; // Limpa as mensagens de log anteriores
+              logMessages.push("Iniciando execução do script.");
+              app.beginUndoGroup("Aplicar Animação");
+              var comp = app.project.activeItem;
+              if (!comp || !(comp instanceof CompItem)) {
+                  throw new Error("Nenhuma composição selecionada.");
+              }
+              logMessages.push("Composição ativa: " + comp.name);
 
-    myPalette.grp.mainGroup.executeGroup.offsetLayersBtn.onClick = function () {
-      try {
-        alert("Iniciando execução do script.");
-        logMessages = []; // Limpa as mensagens de log anteriores
-        logMessages.push("Iniciando execução do script.");
-        app.beginUndoGroup("Aplicar Animação");
-        var comp = app.project.activeItem;
-        if (!comp || !(comp instanceof CompItem)) {
-          throw new Error("Nenhuma composição selecionada.");
-        }
-        logMessages.push("Composição ativa: " + comp.name);
-
-        var selectedLayerIndex = myPalette.grp.mainGroup.layerGroup.layerDropDown.selection.index;
-        var selectedLayer = comp.layer(selectedLayerIndex + 1);
-        logMessages.push("Camada selecionada: " + selectedLayer.name);
-        
-        var selectedAnimation = myPalette.grp.mainGroup.animationGroup.animationDropDown.selection.text;
-        var repeatCount = parseInt(myPalette.grp.mainGroup.repeatGroup.repeatAmount.text);
-        var animationSize = myPalette.grp.mainGroup.sizeGroup.sizeSlider.value / 100;
-        
-        logMessages.push("Animação selecionada: " + selectedAnimation);
-        logMessages.push("Número de repetições: " + repeatCount);
-        logMessages.push("Tamanho da animação: " + (animationSize * 100) + "%");
-        
-        applyAnimation(selectedLayer, selectedAnimation, repeatCount, animationSize);
-        
-        app.endUndoGroup();
-      } catch (error) {
-        alert("Erro durante a execução do script: " + error.toString());
-        logMessages.push("Erro: " + error.toString());
-      } finally {
-        // Exibir log em uma janela de alerta
-        alert("Log de execução:\n" + logMessages.join("\n"));
-      }
-    };
+              var selectedLayerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.selection;
+              if (!selectedLayerItem) {
+                  throw new Error("Nenhuma camada selecionada no dropdown.");
+              }
+              var selectedLayer = comp.layer(selectedLayerItem.layerIndex);
+              logMessages.push("Camada selecionada: " + selectedLayer.name);
+              
+              var selectedAnimation = myPalette.grp.mainGroup.animationGroup.animationDropDown.selection.text;
+              var repeatCount = parseInt(myPalette.grp.mainGroup.repeatGroup.repeatAmount.text);
+              var animationSize = myPalette.grp.mainGroup.sizeGroup.sizeSlider.value / 100;
+              
+              logMessages.push("Animação selecionada: " + selectedAnimation);
+              logMessages.push("Número de repetições: " + repeatCount);
+              logMessages.push("Tamanho da animação: " + (animationSize * 100) + "%");
+              
+              applyAnimation(selectedLayer, selectedAnimation, repeatCount, animationSize);
+              
+              app.endUndoGroup();
+          } catch (error) {
+              alert("Erro durante a execução do script: " + error.toString());
+              logMessages.push("Erro: " + error.toString());
+          } finally {
+              // Exibir log em uma janela de alerta
+              alert("Log de execução:\n" + logMessages.join("\n"));
+          }
+      };
   }
   myPalette.layout.layout(true);
   myPalette.grp.minimumSize = myPalette.grp.size;
   myPalette.layout.resize();
   myPalette.onResizing = myPalette.onResize = function () {
-    this.layout.resize();
+      this.layout.resize();
   };
   return myPalette;
 }
