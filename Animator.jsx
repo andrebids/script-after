@@ -27,15 +27,27 @@ function buildUI(thisObject) {
   }
   if (myPalette != null) {
       var res =
-          "group { \
-              orientation:'column', alignment:['fill','top'], \
-                mainGroup: Group { \
-                    text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
-                    animationGroup: Group { \
-                        orientation:'row', alignment:['fill','top'], spacing:5, \
-                        animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
-                        animationDropDown: DropDownList { properties:{items:['Flash', 'FlashWW', 'SlowFlash']}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
-                    }, \
+      "group { \
+      orientation:'column', alignment:['fill','top'], \
+      mainGroup: Group { \
+          text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
+          animationGroup: Group { \
+              orientation:'row', alignment:['fill','top'], spacing:5, \
+              animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
+              animationDropDown: DropDownList { properties:{items:[\
+                  'Flash PW (novo)', \
+                  'FlashWW', \
+                  'SlowFlash PW', \
+                  'SlowFlash WW', \
+                  'FL900E', \
+                  'FL900EW', \
+                  'FL900EWW', \
+                  'FL902', \
+                  'KCL', \
+                  'Sparkle', \
+                  'Flash PW (antigo)' \
+              ]}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
+          }, \
                   layerGroup: Group { \
                       orientation:'row', alignment:['fill','top'], spacing:5, \
                       layerText: StaticText { text:'Camada:', alignment:['left','center'] }, \
@@ -187,12 +199,28 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
         logMessages.push("Iniciando aplicação da animação '" + animation + "' na camada: " + layer.name);
         
         var animationPath;
-        if (animation === "Flash") {
-            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\Starflash20.mov";
+        if (animation === "Flash PW (novo)") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FX_PW_F.mov";
         } else if (animation === "FlashWW") {
-            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\StarflashWW.mov";
-        } else if (animation === "SlowFlash") {
-            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\SlowFlash.mov";
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FX_WW_F.mov";
+        } else if (animation === "SlowFlash PW") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\SLOWFLASH_PW.mov";
+        } else if (animation === "SlowFlash WW") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\SLOWFLASH_WW.mov";
+        } else if (animation === "FL900E") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FL900E_2022_brilho.mov";
+        } else if (animation === "FL900EW") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FL900EW_2022.mov";
+        } else if (animation === "FL900EWW") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FL900EWW_2022.mov";
+        } else if (animation === "FL902") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\FL902_2022_brilho.mov";
+        } else if (animation === "KCL") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\KCL_FINAL_AGORA.mov"; 
+        } else if (animation === "Sparkle") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\SP.mov";  
+        } else if (animation === "Flash PW (antigo)") {
+            animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\Starflash20.mov";  
         }
         
         var animationFile = resolverCaminhoRede(animationPath);
