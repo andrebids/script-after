@@ -195,7 +195,15 @@ function resolverCaminhoRede(caminho) {
 
 function applyAnimation(layer, animation, repeatCount, animationSize) {
     try {
+        if (!layer) {
+            throw new Error("Camada selecionada é nula ou indefinida.");
+        }
+
         var comp = layer.containingComp;
+        if (!comp) {
+            throw new Error("Não foi possível obter a composição contendo a camada.");
+        }
+
         logMessages.push("Iniciando aplicação da animação '" + animation + "' na camada: " + layer.name);
         
         var animationPath;
@@ -222,7 +230,11 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
         } else if (animation === "Flash PW (antigo)") {
             animationPath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\Starflash20.mov";  
         }
-        
+
+        if (!animationPath) {
+            throw new Error("Caminho da animação não definido para: " + animation);
+        }
+
         var animationFile = resolverCaminhoRede(animationPath);
         logMessages.push("Tentando acessar o arquivo de animação: " + animationFile.fsName);
 
@@ -232,75 +244,158 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
 
         logMessages.push("Arquivo de animação encontrado.");
         var animationFootage = app.project.importFile(new ImportOptions(animationFile));
+        if (!animationFootage) {
+            throw new Error("Falha ao importar o arquivo de animação.");
+        }
         logMessages.push("Arquivo de animação importado com sucesso.");
         
-        // Obter as dimensões e posição da camada selecionada
-        var layerWidth = layer.width;
-        var layerHeight = layer.height;
+        var isShapeLayer = layer instanceof ShapeLayer;
+        logMessages.push("Tipo de camada: " + (isShapeLayer ? "Shape Layer" : "Outra"));
+
         var layerPosition = layer.transform.position.value;
-        var layerAnchor = layer.transform.anchorPoint.value;
+        var layerAnchorPoint = layer.transform.anchorPoint.value;
         var layerScale = layer.transform.scale.value;
         
-        // Definir o valor fixo para o offset máximo (em frames)
-        var maxOffset = 120;
+        function localToGlobal(point) {
+            var adjustedX = (point[0] - layerAnchorPoint[0]) * layerScale[0] / 100;
+            var adjustedY = (point[1] - layerAnchorPoint[1]) * layerScale[1] / 100;
+            return [
+                layerPosition[0] + adjustedX,
+                layerPosition[1] + adjustedY
+            ];
+        }
+
+        var layerBounds;
+        var getRandomPoint;
+
+        if (isShapeLayer) {
+            var contents = layer.property("Contents");
+            if (!contents) {
+                throw new Error("Não foi possível acessar o conteúdo da Shape Layer.");
+            }
+            
+            logMessages.push("Número de propriedades no conteúdo: " + contents.numProperties);
+
+            function findShapePath(prop) {
+                for (var i = 1; i <= prop.numProperties; i++) {
+                    var p = prop.property(i);
+                    logMessages.push("Analisando propriedade: " + p.name + " (Match Name: " + p.matchName + ")");
+                    
+                    if (p.matchName === "ADBE Vector Shape - Group") {
+                        return p.property("Path");
+                    } else if (p.propertyType === PropertyType.INDEXED_GROUP || p.propertyType === PropertyType.NAMED_GROUP) {
+                        var result = findShapePath(p);
+                        if (result) return result;
+                    }
+                }
+                return null;
+            }
+
+            var shapePath = findShapePath(contents);
+            
+            if (!shapePath) {
+                throw new Error("Não foi possível encontrar o path na Shape Layer.");
+            }
+            
+            logMessages.push("Path encontrado: " + shapePath.name);
+            
+            var path = shapePath.value;
+            var vertices = path.vertices;
+            var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            
+            for (var i = 0; i < vertices.length; i++) {
+                var vertex = vertices[i];
+                minX = Math.min(minX, vertex[0]);
+                minY = Math.min(minY, vertex[1]);
+                maxX = Math.max(maxX, vertex[0]);
+                maxY = Math.max(maxY, vertex[1]);
+            }
+            
+            layerBounds = {left: minX, top: minY, right: maxX, bottom: maxY};
+
+            function isPointInShape(x, y) {
+                var result = false;
+                var j = path.vertices.length - 1;
+                for (var i = 0; i < path.vertices.length; i++) {
+                    if ((path.vertices[i][1] > y) != (path.vertices[j][1] > y) &&
+                        (x < (path.vertices[j][0] - path.vertices[i][0]) * (y - path.vertices[i][1]) / (path.vertices[j][1] - path.vertices[i][1]) + path.vertices[i][0])) {
+                        result = !result;
+                    }
+                    j = i;
+                }
+                return result;
+            }
+
+            getRandomPoint = function() {
+                var x, y;
+                do {
+                    x = layerBounds.left + Math.random() * (layerBounds.right - layerBounds.left);
+                    y = layerBounds.top + Math.random() * (layerBounds.bottom - layerBounds.top);
+                } while (!isPointInShape(x, y));
+                return localToGlobal([x, y]);
+            };
+        } else {
+            var layerWidth = layer.width;
+            var layerHeight = layer.height;
+            layerBounds = {
+                left: -layerWidth / 2,
+                top: -layerHeight / 2,
+                right: layerWidth / 2,
+                bottom: layerHeight / 2
+            };
+
+            getRandomPoint = function() {
+                var randomX = Math.random() * layerWidth - layerWidth / 2;
+                var randomY = Math.random() * layerHeight - layerHeight / 2;
+                return [
+                    layerPosition[0] + randomX * layerScale[0] / 100,
+                    layerPosition[1] + randomY * layerScale[1] / 100
+                ];
+            };
+        }
+
+        logMessages.push("Limites da camada: " + JSON.stringify(layerBounds));
         
-        // Array para armazenar as camadas de animação criadas
+        var maxOffset = 120;
         var createdLayers = [];
         
         for (var i = 0; i < repeatCount; i++) {
-            // Adicionar a camada de animação
             var animationLayer = comp.layers.add(animationFootage);
+            if (!animationLayer) {
+                throw new Error("Falha ao adicionar camada de animação à composição.");
+            }
             createdLayers.push(animationLayer);
             
-            // Ajustar a escala da animação baseado no animationSize
             var scale = animationSize * 100;
             animationLayer.transform.scale.setValue([scale, scale]);
             
-            // Calcular as dimensões da animação após o ajuste de escala
-            var footageWidth = animationFootage.width * animationSize;
-            var footageHeight = animationFootage.height * animationSize;
+            var randomPoint = getRandomPoint();
+            animationLayer.transform.position.setValue(randomPoint);
             
-            // Calcular os limites da camada selecionada na composição
-            var layerLeft = layerPosition[0] - (layerWidth * layerScale[0] / 100) / 2;
-            var layerTop = layerPosition[1] - (layerHeight * layerScale[1] / 100) / 2;
-            var layerRight = layerLeft + (layerWidth * layerScale[0] / 100);
-            var layerBottom = layerTop + (layerHeight * layerScale[1] / 100);
-            
-            // Calcular uma posição aleatória dentro dos limites da camada selecionada
-            var randomX = layerLeft + Math.random() * (layerRight - layerLeft - footageWidth);
-            var randomY = layerTop + Math.random() * (layerBottom - layerTop - footageHeight);
-            
-            // Definir a posição da animação
-            animationLayer.transform.position.setValue([randomX + footageWidth/2, randomY + footageHeight/2]);
-            
-            // Calcular o offset aleatório (em frames)
             var randomOffset = Math.floor(Math.random() * maxOffset);
             
-            // Ajustar o tempo da animação com o offset calculado
             animationLayer.startTime = layer.inPoint;
             animationLayer.inPoint = layer.inPoint;
             
-            // Aplicar o offset usando time remapping
             if (animationLayer.canSetTimeRemapEnabled) {
                 animationLayer.timeRemapEnabled = true;
                 var timeRemap = animationLayer.property("ADBE Time Remapping");
-                timeRemap.setValueAtTime(0, randomOffset / comp.frameRate);
+                if (timeRemap) {
+                    timeRemap.setValueAtTime(0, randomOffset / comp.frameRate);
+                }
             }
             
-            // Ajustar o ponto de saída para não ultrapassar o da camada selecionada
             var animationDuration = animationLayer.outPoint - animationLayer.inPoint;
             animationLayer.outPoint = Math.min(layer.outPoint, animationLayer.inPoint + animationDuration);
             
             logMessages.push("Animação " + (i + 1) + " de " + repeatCount + " aplicada em posição aleatória com offset de " + (randomOffset / comp.frameRate).toFixed(2) + " segundos.");
         }
         
-        // Criar um precompose com todas as animações criadas
         if (createdLayers.length > 0) {
             var basePrecompName = animation;
             var precompName = basePrecompName;
             var counter = 1;
             
-            // Verifica se já existe um precomp com este nome e adiciona um número se necessário
             while (comp.layer(precompName) != null) {
                 counter++;
                 precompName = basePrecompName + "_" + counter;
@@ -311,6 +406,9 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
                 layerIndices.push(createdLayers[j].index);
             }
             var precomp = comp.layers.precompose(layerIndices, precompName, true);
+            if (!precomp) {
+                throw new Error("Falha ao criar precompose.");
+            }
             logMessages.push("Precompose criado: " + precompName + " com " + createdLayers.length + " camadas.");
         }
         
