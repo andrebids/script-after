@@ -559,7 +559,17 @@ function removerCamadaPreview() {
         for (var i = 1; i <= comp.numLayers; i++) {
             var layer = comp.layer(i);
             if (layer.name.indexOf("Preview_") === 0) {
+                // Armazena a referência ao item de footage
+                var footageItem = layer.source;
+                
+                // Remove a camada da composição
                 layer.remove();
+                
+                // Remove o item de footage do projeto
+                if (footageItem && footageItem instanceof FootageItem) {
+                    footageItem.remove();
+                }
+                
                 break;
             }
         }
