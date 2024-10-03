@@ -349,10 +349,50 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
                 return;
             }
             
+            // Função para interpolar pontos adicionais ao longo das curvas
+            function interpolateCurvePoints(path, numPoints) {
+                var interpolatedPoints = [];
+                for (var i = 0; i < path.vertices.length; i++) {
+                    var startPoint = path.vertices[i];
+                    var endPoint = path.vertices[(i + 1) % path.vertices.length];
+                    var startTangent = path.outTangents[i];
+                    var endTangent = path.inTangents[(i + 1) % path.vertices.length];
+                    
+                    interpolatedPoints.push(startPoint);
+                    
+                    for (var j = 1; j < numPoints; j++) {
+                        var t = j / numPoints;
+                        var point = bezierInterpolation(startPoint, endPoint, startTangent, endTangent, t);
+                        interpolatedPoints.push(point);
+                    }
+                }
+                return interpolatedPoints;
+            }
+            
+            function bezierInterpolation(p0, p1, t0, t1, t) {
+                var u = 1 - t;
+                var tt = t * t;
+                var uu = u * u;
+                var uuu = uu * u;
+                var ttt = tt * t;
+                
+                var p = [
+                    uuu * p0[0] + 3 * uu * t * (p0[0] + t0[0]) + 3 * u * tt * (p1[0] + t1[0]) + ttt * p1[0],
+                    uuu * p0[1] + 3 * uu * t * (p0[1] + t0[1]) + 3 * u * tt * (p1[1] + t1[1]) + ttt * p1[1]
+                ];
+                
+                return p;
+            }
+            
+            var interpolatedShapePaths = [];
+            for (var i = 0; i < shapePaths.length; i++) {
+                interpolatedShapePaths.push(interpolateCurvePoints(shapePaths[i], 10)); // 10 pontos interpolados entre cada par de vértices
+            }
+            
             var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             
-            for (var i = 0; i < shapePaths.length; i++) {
-                var vertices = shapePaths[i].vertices;
+            for (var i = 0; i < interpolatedShapePaths.length; i++) {
+                var vertices = interpolatedShapePaths[i];
                 for (var j = 0; j < vertices.length; j++) {
                     var vertex = vertices[j];
                     minX = Math.min(minX, vertex[0]);
@@ -365,13 +405,13 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
             layerBounds = {left: minX, top: minY, right: maxX, bottom: maxY};
 
             function isPointInShapes(x, y) {
-                for (var k = 0; k < shapePaths.length; k++) {
-                    var path = shapePaths[k];
+                for (var k = 0; k < interpolatedShapePaths.length; k++) {
+                    var path = interpolatedShapePaths[k];
                     var result = false;
-                    var j = path.vertices.length - 1;
-                    for (var i = 0; i < path.vertices.length; i++) {
-                        if ((path.vertices[i][1] > y) != (path.vertices[j][1] > y) &&
-                            (x < (path.vertices[j][0] - path.vertices[i][0]) * (y - path.vertices[i][1]) / (path.vertices[j][1] - path.vertices[i][1]) + path.vertices[i][0])) {
+                    var j = path.length - 1;
+                    for (var i = 0; i < path.length; i++) {
+                        if ((path[i][1] > y) != (path[j][1] > y) &&
+                            (x < (path[j][0] - path[i][0]) * (y - path[i][1]) / (path[j][1] - path[i][1]) + path[i][0])) {
                             result = !result;
                         }
                         j = i;
