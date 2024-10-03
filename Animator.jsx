@@ -14,143 +14,221 @@ function isNetworkAccessAllowed() {
     return securitySetting == 1;
   }
 }
+function obterCaminhoAnimacao(animation) {
+    var basePath = "\\\\192.168.1.104\\Olimpo\\DS\\_BASE DE DADOS\\07. TOOLS\\AFTER-EFFECTS\\ANIMACOES\\_2024\\";
+    var animationPaths = {
+        "Flash PW (novo)": basePath + "FX_PW_F.mov",
+        "FlashWW": basePath + "FX_WW_F.mov",
+        "SlowFlash PW": basePath + "SLOWFLASH_PW.mov",
+        "SlowFlash WW": basePath + "SLOWFLASH_WW.mov",
+        "FL900E": basePath + "FL900E_2022_brilho.mov",
+        "FL900EW": basePath + "FL900EW_2022.mov",
+        "FL900EWW": basePath + "FL900EWW_2022.mov",
+        "FL902": basePath + "FL902_2022_brilho.mov",
+        "KCL": basePath + "KCL_FINAL_AGORA.mov",
+        "Sparkle": basePath + "SP.mov",
+        "Flash PW (antigo)": basePath + "Starflash20.mov"
+    };
+    return animationPaths[animation] || "";
+}
 
 function buildUI(thisObject) {
-  if (thisObject instanceof Panel) {
-      var myPalette = thisObject;
-  } else {
-      var myPalette = new Window("palette", scriptTitle, undefined, {
-          resizeable: true,
-      });
-  }
-  if (myPalette != null) {
-      var res =
-      "group { \
-      orientation:'column', alignment:['fill','top'], \
-      mainGroup: Group { \
-          text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
-          animationGroup: Group { \
-              orientation:'row', alignment:['fill','top'], spacing:5, \
-              animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
-              animationDropDown: DropDownList { properties:{items:[\
-                  'Flash PW (novo)', \
-                  'FlashWW', \
-                  'SlowFlash PW', \
-                  'SlowFlash WW', \
-                  'FL900E', \
-                  'FL900EW', \
-                  'FL900EWW', \
-                  'FL902', \
-                  'KCL', \
-                  'Sparkle', \
-                  'Flash PW (antigo)' \
-              ]}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
-          }, \
-                  layerGroup: Group { \
-                      orientation:'row', alignment:['fill','top'], spacing:5, \
-                      layerText: StaticText { text:'Camada:', alignment:['left','center'] }, \
-                      layerDropDown: DropDownList { alignment:['fill','center'], helpTip:'Escolha a camada para aplicar a animação' } \
-                  }, \
-                  repeatGroup: Group { \
-                      orientation:'row', alignment:['fill','top'], spacing:5, \
-                      repeatText: StaticText { text:'Repetições:', alignment:['left','center'] }, \
-                      repeatAmount: EditText { text:'1', alignment:['fill','center'], helpTip:'Número de vezes para repetir a animação' } \
-                  }, \
-                  sizeGroup: Group { \
-                      orientation:'row', alignment:['fill','top'], spacing:5, \
-                      sizeText: StaticText { text:'Tamanho (%):', alignment:['left','center'] }, \
-                      sizeSlider: Slider { minvalue:5, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
-                      sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
-                  }, \
-                  executeGroup: Group { \
-                      orientation:'row', alignChildren:['fill','top'], \
-                      offsetLayersBtn: Button { text:'Aplicar Animação', helpTip:'Aplica a animação à camada selecionada com offset aleatório' } \
-                  } \
-              } \
-          }";
-      myPalette.grp = myPalette.add(res);
-
-      myPalette.grp.mainGroup.animationGroup.animationDropDown.selection = 0;
-
-      // Função para atualizar o dropdown de camadas
-      function updateLayerDropdown() {
-          var comp = app.project.activeItem;
-          if (comp && comp instanceof CompItem) {
-              myPalette.grp.mainGroup.layerGroup.layerDropDown.removeAll();
-              for (var i = 1; i <= comp.numLayers; i++) {
-                  var layerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", comp.layer(i).name);
-                  layerItem.layerIndex = i;
-              }
-              if (comp.numLayers > 0) {
-                  myPalette.grp.mainGroup.layerGroup.layerDropDown.selection = 0;
-                  myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = true;
-              } else {
-                  myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", "Nenhuma camada na composição");
-                  myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = false;
-              }
-          } else {
-              myPalette.grp.mainGroup.layerGroup.layerDropDown.removeAll();
-              myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", "Nenhuma composição ativa");
-              myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = false;
-          }
-      }
-
-      // Atualizar o dropdown de camadas quando o painel é aberto
-      myPalette.onShow = updateLayerDropdown;
-
-      // Adicionar um botão para atualizar manualmente o dropdown de camadas
-      myPalette.grp.mainGroup.layerGroup.add("button", undefined, "Atualizar", {alignment: ['right', 'center']});
-      myPalette.grp.mainGroup.layerGroup.children[2].onClick = updateLayerDropdown;
-
-      // Inicializar o dropdown de camadas
-      updateLayerDropdown();
-
-      // Atualizar o valor do tamanho quando o slider é movido
-          myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
-            var value = Math.max(5, Math.round(this.value / 5) * 5);
-            this.value = value;
-            myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
+    if (thisObject instanceof Panel) {
+        var myPalette = thisObject;
+    } else {
+        var myPalette = new Window("palette", scriptTitle, undefined, {
+            resizeable: true,
+        });
+    }
+    if (myPalette != null) {
+        var res =
+        "group { \
+        orientation:'column', alignment:['fill','top'], \
+        mainGroup: Group { \
+            text:'Layer Offset Setup', orientation:'column', alignment:['fill','top'], alignChildren:['fill','top'], spacing:5, \
+            animationGroup: Group { \
+                orientation:'row', alignment:['fill','top'], spacing:5, \
+                animationText: StaticText { text:'Animação:', alignment:['left','center'] }, \
+                animationDropDown: DropDownList { properties:{items:[\
+                    'Flash PW (novo)', \
+                    'FlashWW', \
+                    'SlowFlash PW', \
+                    'SlowFlash WW', \
+                    'FL900E', \
+                    'FL900EW', \
+                    'FL900EWW', \
+                    'FL902', \
+                    'KCL', \
+                    'Sparkle', \
+                    'Flash PW (antigo)' \
+                ]}, alignment:['fill','center'], helpTip:'Escolha a animação predefinida' } \
+            }, \
+            layerGroup: Group { \
+                orientation:'row', alignment:['fill','top'], spacing:5, \
+                layerText: StaticText { text:'Layer a aplicar:', alignment:['left','center'] }, \
+                layerDropDown: DropDownList { alignment:['fill','center'], helpTip:'Escolha a camada para aplicar a animação' } \
+            }, \
+            repeatGroup: Group { \
+                orientation:'row', alignment:['fill','top'], spacing:5, \
+                repeatText: StaticText { text:'Repetições :', alignment:['left','center'] }, \
+                repeatAmount: EditText { text:'1', alignment:['fill','center'], helpTip:'Número de vezes para repetir a animação' } \
+            }, \
+            sizeGroup: Group { \
+                orientation:'row', alignment:['fill','top'], spacing:5, \
+                sizeText: StaticText { text:'Tamanho (%):', alignment:['left','center'] }, \
+                sizeSlider: Slider { minvalue:5, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
+                sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
+            }, \
+            previewGroup: Group { \
+                orientation:'row', alignChildren:['fill','top'], \
+                previewBtn: Button { text:'Pré-visualizar', helpTip:'Cria uma única instância da animação para pré-visualização' } \
+            }, \
+            executeGroup: Group { \
+                orientation:'row', alignChildren:['fill','top'], \
+                offsetLayersBtn: Button { text:'Aplicar Animação', helpTip:'Aplica a animação à camada selecionada com offset aleatório' } \
+            } \
+        } \
+        }";
+        myPalette.grp = myPalette.add(res);
+  
+        myPalette.grp.mainGroup.animationGroup.animationDropDown.selection = 0;
+  
+        function atualizarDropdownCamadas() {
+            var comp = app.project.activeItem;
+            if (comp && comp instanceof CompItem) {
+                myPalette.grp.mainGroup.layerGroup.layerDropDown.removeAll();
+                for (var i = 1; i <= comp.numLayers; i++) {
+                    var layerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", comp.layer(i).name);
+                    layerItem.layerIndex = i;
+                }
+                if (comp.numLayers > 0) {
+                    myPalette.grp.mainGroup.layerGroup.layerDropDown.selection = 0;
+                    myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = true;
+                } else {
+                    myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", "Nenhuma camada na composição");
+                    myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = false;
+                }
+            } else {
+                myPalette.grp.mainGroup.layerGroup.layerDropDown.removeAll();
+                myPalette.grp.mainGroup.layerGroup.layerDropDown.add("item", "Nenhuma composição ativa");
+                myPalette.grp.mainGroup.layerGroup.layerDropDown.enabled = false;
+            }
+        }
+  
+        myPalette.onShow = atualizarDropdownCamadas;
+  
+        myPalette.grp.mainGroup.layerGroup.add("button", undefined, "Atualizar", {alignment: ['right', 'center']});
+        myPalette.grp.mainGroup.layerGroup.children[2].onClick = atualizarDropdownCamadas;
+  
+        atualizarDropdownCamadas();
+  
+        myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
+            var valor = Math.max(5, Math.round(this.value / 5) * 5);
+            this.value = valor;
+            myPalette.grp.mainGroup.sizeGroup.sizeValue.text = valor + "%";
         }
         
-        myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChange = function() {
-            var value = Math.max(5, Math.round(this.value / 5) * 5);
-            this.value = value;
-            myPalette.grp.mainGroup.sizeGroup.sizeValue.text = value + "%";
-        }
-
-      myPalette.grp.mainGroup.executeGroup.offsetLayersBtn.onClick = function () {
-          try {
-              app.beginUndoGroup("Aplicar Animação");
-              var comp = app.project.activeItem;
-              if (!comp || !(comp instanceof CompItem)) {
-                  throw new Error("Nenhuma composição selecionada.");
-              }
-
-              var selectedLayerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.selection;
-              if (!selectedLayerItem) {
-                  throw new Error("Nenhuma camada selecionada no dropdown.");
-              }
-              var selectedLayer = comp.layer(selectedLayerItem.layerIndex);
-              
-              var selectedAnimation = myPalette.grp.mainGroup.animationGroup.animationDropDown.selection.text;
-              var repeatCount = parseInt(myPalette.grp.mainGroup.repeatGroup.repeatAmount.text);
-              var animationSize = myPalette.grp.mainGroup.sizeGroup.sizeSlider.value / 100;
-              
-              applyAnimation(selectedLayer, selectedAnimation, repeatCount, animationSize);
-              
-              app.endUndoGroup();
-          } catch (error) {
-              alert("Erro durante a execução do script: " + error.toString());
-          }
-      };
-  }
-  myPalette.layout.layout(true);
-  myPalette.grp.minimumSize = myPalette.grp.size;
-  myPalette.layout.resize();
-  myPalette.onResizing = myPalette.onResize = function () {
-      this.layout.resize();
-  };
-  return myPalette;
+        myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChange = myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging;
+  
+        myPalette.grp.mainGroup.previewGroup.previewBtn.onClick = function () {
+            try {
+                app.beginUndoGroup("Pré-visualizar Animação");
+                var comp = app.project.activeItem;
+                if (!comp || !(comp instanceof CompItem)) {
+                    throw new Error("Nenhuma composição selecionada.");
+                }
+                
+                var selectedLayerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.selection;
+                if (!selectedLayerItem) {
+                    throw new Error("Nenhuma camada selecionada no dropdown.");
+                }
+                var selectedLayer = comp.layer(selectedLayerItem.layerIndex);
+                
+                if (!selectedLayer) {
+                    throw new Error("Camada selecionada é inválida.");
+                }
+                
+                var selectedAnimation = myPalette.grp.mainGroup.animationGroup.animationDropDown.selection.text;
+                var animationSize = myPalette.grp.mainGroup.sizeGroup.sizeSlider.value / 100;
+                
+                var animationPath = obterCaminhoAnimacao(selectedAnimation);
+                if (!animationPath) {
+                    throw new Error("Caminho da animação não encontrado para: " + selectedAnimation);
+                }
+                
+                var animationFile = new File(animationPath);
+                if (!animationFile.exists) {
+                    throw new Error("Arquivo de animação não encontrado: " + animationPath);
+                }
+                var animationFootage = app.project.importFile(new ImportOptions(animationFile));
+                
+                var previewLayer = comp.layers.add(animationFootage);
+                previewLayer.name = "Preview_" + selectedAnimation;
+                
+                var scale = animationSize * 100;
+                previewLayer.transform.scale.setValue([scale, scale]);
+                
+                previewLayer.startTime = selectedLayer.inPoint;
+                previewLayer.inPoint = selectedLayer.inPoint;
+                previewLayer.outPoint = Math.min(selectedLayer.outPoint, previewLayer.inPoint + animationFootage.duration);
+                
+                comp.duration = previewLayer.outPoint - previewLayer.inPoint;
+                comp.time = previewLayer.inPoint;
+                
+                var previewRect = previewLayer.sourceRectAtTime(comp.time, false);
+                var zoomFactor = Math.min(comp.width / previewRect.width, comp.height / previewRect.height) * 0.9;
+                
+                var viewCenterPoint = [
+                    previewRect.left + previewRect.width / 2,
+                    previewRect.top + previewRect.height / 2
+                ];
+                comp.viewportCenterPoint = viewCenterPoint;
+                comp.zoom = zoomFactor;
+                
+                app.endUndoGroup();
+                
+                app.scheduleTask("removerCamadaPreview()", 5000, false);
+                
+                alert("Pré-visualização criada com sucesso!");
+                
+            } catch (error) {
+                alert("Erro durante a pré-visualização: " + error.toString() + "\nLinha: " + error.line);
+            }
+        };
+  
+        myPalette.grp.mainGroup.executeGroup.offsetLayersBtn.onClick = function () {
+            try {
+                app.beginUndoGroup("Aplicar Animação");
+                var comp = app.project.activeItem;
+                if (!comp || !(comp instanceof CompItem)) {
+                    throw new Error("Nenhuma composição selecionada.");
+                }
+    
+                var selectedLayerItem = myPalette.grp.mainGroup.layerGroup.layerDropDown.selection;
+                if (!selectedLayerItem) {
+                    throw new Error("Nenhuma camada selecionada no dropdown.");
+                }
+                var selectedLayer = comp.layer(selectedLayerItem.layerIndex);
+                
+                var selectedAnimation = myPalette.grp.mainGroup.animationGroup.animationDropDown.selection.text;
+                var repeatCount = parseInt(myPalette.grp.mainGroup.repeatGroup.repeatAmount.text);
+                var animationSize = myPalette.grp.mainGroup.sizeGroup.sizeSlider.value / 100;
+                
+                applyAnimation(selectedLayer, selectedAnimation, repeatCount, animationSize, obterCaminhoAnimacao);
+                
+                app.endUndoGroup();
+            } catch (error) {
+                alert("Erro durante a execução do script: " + error.toString());
+            }
+        };
+    }
+    myPalette.layout.layout(true);
+    myPalette.grp.minimumSize = myPalette.grp.size;
+    myPalette.layout.resize();
+    myPalette.onResizing = myPalette.onResize = function () {
+        this.layout.resize();
+    };
+    return myPalette;
 }
 
 function resolverCaminhoRede(caminho) {
@@ -436,7 +514,18 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
         alert("Erro ao aplicar animação: " + error.toString());
     }
 }
-
+function removerCamadaPreview() {
+    var comp = app.project.activeItem;
+    if (comp && comp instanceof CompItem) {
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            if (layer.name.indexOf("Preview_") === 0) {
+                layer.remove();
+                break;
+            }
+        }
+    }
+}
 var scriptTitle = "Bids Shifter";
 var scriptVersion = "v1.0";
 
