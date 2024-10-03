@@ -76,7 +76,7 @@ function buildUI(thisObject) {
             sizeGroup: Group { \
                 orientation:'row', alignment:['fill','top'], spacing:5, \
                 sizeText: StaticText { text:'Tamanho (%):', alignment:['left','center'] }, \
-                sizeSlider: Slider { minvalue:5, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
+                sizeSlider: Slider { minvalue:1, maxvalue:100, value:100, alignment:['fill','center'], helpTip:'Tamanho da animação em porcentagem' }, \
                 sizeValue: StaticText { text:'100%', alignment:['right','center'] } \
             }, \
             previewGroup: Group { \
@@ -123,12 +123,13 @@ function buildUI(thisObject) {
         atualizarDropdownCamadas();
   
         myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging = function() {
-            var valor = Math.max(5, Math.round(this.value / 5) * 5);
+            var valor = Math.round(this.value);
             this.value = valor;
             myPalette.grp.mainGroup.sizeGroup.sizeValue.text = valor + "%";
         }
         
         myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChange = myPalette.grp.mainGroup.sizeGroup.sizeSlider.onChanging;
+        
   
         myPalette.grp.mainGroup.previewGroup.previewBtn.onClick = function () {
             try {
@@ -188,8 +189,6 @@ function buildUI(thisObject) {
                 app.endUndoGroup();
                 
                 app.scheduleTask("removerCamadaPreview()", 5000, false);
-                
-                alert("Pré-visualização criada com sucesso!");
                 
             } catch (error) {
                 alert("Erro durante a pré-visualização: " + error.toString() + "\nLinha: " + error.line);
