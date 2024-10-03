@@ -332,23 +332,66 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
             };
         }
 
-        var maxOffset = 120;
         var createdLayers = [];
+        var usedPositions = [];
         
+        var animationWidth = animationFootage.width * animationSize;
+        var animationHeight = animationFootage.height * animationSize;
+        
+        var minDistance = Math.sqrt(animationWidth * animationWidth + animationHeight * animationHeight) / 2;
+
+        function getRandomPointWithSpacing() {
+            var maxAttempts = 100;
+            var attempts = 0;
+            var newPoint;
+
+            while (attempts < maxAttempts) {
+                newPoint = getRandomPoint();
+                attempts++;
+
+                var isFarEnough = true;
+                for (var i = 0; i < usedPositions.length; i++) {
+                    var distance = Math.sqrt(
+                        Math.pow(newPoint[0] - usedPositions[i][0], 2) +
+                        Math.pow(newPoint[1] - usedPositions[i][1], 2)
+                    );
+                    if (distance < minDistance) {
+                        isFarEnough = false;
+                        break;
+                    }
+                }
+
+                if (isFarEnough) {
+                    usedPositions.push(newPoint);
+                    return newPoint;
+                }
+            }
+
+            // Se não encontrar um ponto adequado após todas as tentativas, retorna null
+            return null;
+        }
+
+        var actualRepeatCount = 0;
+
         for (var i = 0; i < repeatCount; i++) {
+            var randomPoint = getRandomPointWithSpacing();
+            if (randomPoint === null) {
+                break; // Não há mais espaço disponível respeitando o espaçamento mínimo
+            }
+
             var animationLayer = comp.layers.add(animationFootage);
             if (!animationLayer) {
-                return;
+                continue;
             }
             createdLayers.push(animationLayer);
+            actualRepeatCount++;
             
             var scale = animationSize * 100;
             animationLayer.transform.scale.setValue([scale, scale]);
             
-            var randomPoint = getRandomPoint();
             animationLayer.transform.position.setValue(randomPoint);
             
-            var randomOffset = Math.floor(Math.random() * maxOffset);
+            var randomOffset = Math.floor(Math.random() * animationFootage.duration * comp.frameRate);
             
             animationLayer.startTime = layer.inPoint;
             animationLayer.inPoint = layer.inPoint;
@@ -384,7 +427,13 @@ function applyAnimation(layer, animation, repeatCount, animationSize) {
                 return;
             }
         }
+
+        if (actualRepeatCount < repeatCount) {
+            alert("Aviso: Apenas " + actualRepeatCount + " de " + repeatCount + " animações foram colocadas devido às restrições de espaço e espaçamento mínimo.");
+        }
+
     } catch (error) {
+        alert("Erro ao aplicar animação: " + error.toString());
     }
 }
 
